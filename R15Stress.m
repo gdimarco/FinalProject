@@ -1,64 +1,57 @@
-%% Import data file
+% Import data file
 [~,~,stressData] = xlsread('/Users/giulianadimarco/Documents/Texas Tech/Research/Data/R15StressData.xlsx','R15StressData');
-varNames = isstrprop(stressData{1,1:end},'alphanum'); %removes spaces & illegal characters from variable names
+varNames = cellfun(@(x) x(isstrprop(x,'alphanum')),stressData(1,:),'UniformOutput',false); %removes spaces & illegal characters from variable names
 %% create table and add new cols
-dataTable = array2table(stressData(2:end,:),'VariableNames',varNames);
-dataTable.Prop_Correct = ((dataTable.NUMCORRECTDURINGSTIMULUS + dataTable.NUMCORRECTDURINGLH) ./ dataTable.NUMTRIALS);
-dataTable.Prop_Prem = dataTable.NUMPREMATURE ./ dataTable.NUMTRIALS;
-dataTable.Prop_Omit = dataTable.NUMOMISSIONS ./ dataTable.NUMTRIALS;
-%% remove any numbers over 1
-i = 1:length(dataTable.Prop_Correct);
-if i > 1
-   i = NaN;
-end
+stressDataTable = cell2table(stressData(2:end,:),'VariableNames',varNames);
+stressDataTable.PropCorrect = ((stressDataTable.NUMCORRECTDURINGSTIMULUS) + (stressDataTable.NUMCORRECTDURINGLH)) ./ (stressDataTable.NUMTRIALS);
+stressDataTable.PropPrem = (stressDataTable.NUMPREMATURE)./(stressDataTable.NUMTRIALS);
+stressDataTable.PropOmit = (stressDataTable.NUMOMISSIONS) ./ (stressDataTable.NUMTRIALS);
 %% get totals for Non-Tg Cont Correct graphs
-onlyNTgCont = dataTable(strcmpi(dataTable.Genotype, 'Non-Tg') & strcmpi(dataTable.GROUP, '3CSRTT-C'));
-nTgCPreW = onlyNTgCont(strcmpi(onlyNTgCont.SessionType, 'pre water stress'));
-corrNTgCPreW = mean(nTgCPreW{'Prop_Correct',:});
-premNTgCPreWat = mean(nTgCPreW{'Prop_Prem',:});
-omitNTgCPreW = mean(nTgCPreW{'Prop_Omit',:});
+corrNTgCPreW = mean(stressDataTable{:,'PropCorrect'});
+premNTgCPreWat = mean(stressDataTable{:,'PropPrem'});
+omitNTgCPreW = mean(stressDataTable{:,'PropOmit'});
 
 nTgCWat = onlyNTgCont(strcmpi(onlyNTgCont.SessionType, 'water stress'));
-corrNTgCWat = mean(nTgCWat{'Prop_Correct',:});
-premNTgCWat = mean(nTgCWat{'Prop_Prem',:});
-omitNTgCWat = mean(nTgCWat{'Prop_Omit',:});
+corrNTgCWat = mean(nTgCWat{:,'PropCorrect'});
+premNTgCWat = mean(nTgCWat{:,'PropPrem'});
+omitNTgCWat = mean(nTgCWat{:,'PropOmit'});
 
 nTgCPostW = onlyNTgCont(strcmpi(onlyNTgCont.SessionType, 'post water stress'));
-corrNTgCPostW = mean(nTgCPostW{'Prop_Correct',:});
-premNTgCPostW = mean(nTgCPostW{'Prop_Prem',:});
-omitNTgCPostW = mean(nTgCPostW{'Prop_Omit',:});
+corrNTgCPostW = mean(nTgCPostW{:,'PropCorrect'});
+premNTgCPostW = mean(nTgCPostW{:,'PropPrem'});
+omitNTgCPostW = mean(nTgCPostW{:,'PropOmit'});
 
 nTgCPreO = onlyNTgCont(strcmpi(onlyNTgCont.SessionType, 'pre odor stress'));
-corrNTgCPreO = mean(nTgCPreO{'Prop_Correct',:});
-premNTgCPreO = mean(nTgCPreO{'Prop_Prem',:});
-omitNTgCPreO = mean(nTgCPreO{'Prop_Omit',:});
+corrNTgCPreO = mean(nTgCPreO{:,'PropCorrect'});
+premNTgCPreO = mean(nTgCPreO{:,'PropPrem'});
+omitNTgCPreO = mean(nTgCPreO{:,'PropOmit'});
 
 nTgCOdor = onlyNTgCont(strcmpi(onlyNTgCont.SessionType, 'odor stress'));
-corrNTgCOdor = mean(nTgCOdor{'Prop_Correct',:});
-premNTgCOdor = mean(nTgCOdor{'Prop_Prem',:});
-omitNTgCOdor = mean(nTgCOdor{'Prop_Omit',:});
+corrNTgCOdor = mean(nTgCOdor{:,'PropCorrect'});
+premNTgCOdor = mean(nTgCOdor{:,'PropPrem'});
+omitNTgCOdor = mean(nTgCOdor{:,'PropOmit'});
 
 nTgCPostO = onlyNTgCont(strcmpi(onlyNTgCont.SessionType, 'post odor stress'));
-corrNTgCPostO = mean(nTgCPostO{'Prop_Correct',:});
-premNTgCPostO = mean(nTgCPostO{'Prop_Prem',:});
-omitNTgCPostO = mean(nTgCPostO{'Prop_Omit',:});
+corrNTgCPostO = mean(nTgCPostO{:,'Prop_Correct'});
+premNTgCPostO = mean(nTgCPostO{:,'Prop_Prem'});
+omitNTgCPostO = mean(nTgCPostO{:,'Prop_Omit'});
 %% get totals for Tg Cont graphs
-onlyTgCont = dataTable(strcmpi(dataTable.Genotype, 'Tg') & strcmpi(dataTable.GROUP, '3CSRTT-C'));
+onlyTgCont = stressDataTable(strcmpi(stressDataTable.Genotype, 'Tg') & strcmpi(stressDataTable.GROUP, '3CSRTT-C'));
 %% get totals for Non-Tg Int Graphs
-onlyNTgInt = dataTable(strcmpi(dataTable.Genotype, 'Non-Tg') & strcmpi(dataTable.GROUP, '3CSRTT-I'));
+onlyNTgInt = stressDataTable(strcmpi(stressDataTable.Genotype, 'Non-Tg') & strcmpi(stressDataTable.GROUP, '3CSRTT-I'));
 %% get totals for Tg Int Graphs
-onlyTgInt = dataTable(strcmpi(dataTable.Genotype, 'Tg') & strcmpi(dataTable.GROUP, '3CSRTT-I'));
+onlyTgInt = stressDataTable(strcmpi(stressDataTable.Genotype, 'Tg') & strcmpi(stressDataTable.GROUP, '3CSRTT-I'));
 %% run statistics
 ranovatbl = ranova(rm); % repeated measures ANOVA
 c = multcompare(stats,Name,Value); % post-hoc test
 %% create graphs
 figure;
 subplot(3,1,1);
-bar([corrNTgCPreW,corrNTgCWat,corrNTgCPostW,corrNTgCPreO,corrNTgCOdor,corrNTgCPostO],[TgCont],[NonTgInt],[TgInt]);
-% add standard error bars
-% chage colors
-% add * 
+bar([NTgCont],[TgCont],[NTgInt],[TgInt]); 
+title('Proportion Correct');
 subplot(3,1,2);
-bar([premNTgCPreW,premNTgCWat,premNTgCPostW,premNTgCPreO,premNTgCOdor,premNTgCPostO],[TgCont],[NonTgInt],[TgInt]);
+bar([NTgCont],[TgCont],[NTgInt],[TgInt]);
+title('Proportion Premature');
 subplot(3,1,3);
-bar([omitNTgCPreW,omitNTgCWat,omitNTgCPostW,omitNTgCPreO,omitNTgCOdor,omitNTgCPostO],[TgCont],[NonTgInt],[TgInt]);
+bar([NTgCont],[TgCont],[NTgInt],[TgInt]);
+title('Proportion Omitted');
