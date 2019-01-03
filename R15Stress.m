@@ -17,19 +17,19 @@ stressDataArray = grpstats(stressDataTable,{'GROUP','Genotype','SessionType'},{'
 
 %% reorganize data for fitrm and run repeated measures ANOVA 
 
-% stressDataTable.SessionType = sessTypeNames; %replaces the current session type names with the new ones for valid table names
-% dataNames = {'PropCorrect','RatioPersCorrect','PropPrem','RatioPersPrem','PropOmit','RatioPersOmit'};
-% sessionCondition = table([1 2 3 4 5 6]','VariableNames',{'Conditions'});
-% 
-% for i = 1:length(dataNames)
-%     subsetData = stressDataTable(:, {'SUBJECT','SessionType',dataNames{i}});
-%     unstackedData = unstack(subsetData,dataNames{i},'SessionType');
-%     dataNames{i} = unstackedData;
-%     dataNames{i} = dataNames{i}(~any(ismissing(dataNames{i}),2),:); %remove mice who have not completed all stress sessions
-%     rm{i} = fitrm(dataNames{i},'odorstress-waterstress~SUBJECT','WithinDesign',sessionCondition);
-%     ranovatbl{i} = ranova(rm{i});
-%     %c = multcompare(stats,Name,Value); % post-hoc test
-% end
+stressDataTable.SessionType = sessTypeNames; %replaces the current session type names with the new ones for valid table names
+dataNames = {'PropCorrect','RatioPersCorrect','PropPrem','RatioPersPrem','PropOmit','RatioPersOmit'};
+sessionCondition = table([1 2 3 4 5 6]','VariableNames',{'Conditions'});
+
+for i = 1:length(dataNames)
+    subsetData = stressDataTable(:, {'SUBJECT','SessionType',dataNames{i}});
+    unstackedData = unstack(subsetData,dataNames{i},'SessionType');
+    dataNames{i} = unstackedData;
+    dataNames{i} = dataNames{i}(~any(ismissing(dataNames{i}),2),:); %remove mice who have not completed all stress sessions
+    rm{i} = fitrm(dataNames{i},'odorstress-waterstress~SUBJECT','WithinDesign',sessionCondition);
+    ranovatbl{i} = ranova(rm{i});
+    %c = multcompare(stats,Name,Value); % post-hoc test
+end
 %% create graphs
 categories = categorical({'Non-Tg Continuous', 'Tg Continuous','Non-Tg Intermittent','Tg Intermittent'});
 yPlotVars = [stressDataArray.mean_PropCorrect, stressDataArray.mean_RatioPersCorrect, stressDataArray.mean_PropPrem,stressDataArray.mean_RatioPersPrem, stressDataArray.mean_PropOmit, stressDataArray.mean_RatioPersOmit]; 
