@@ -20,7 +20,6 @@ stressDataArray = grpstats(stressDataTable,{'GROUP','Genotype','SessionType'},{'
 stressDataTable.SessionType = sessTypeNames; %replaces the current session type names with the new ones for valid table names
 dataNames = {'PropCorrect','RatioPersCorrect','PropPrem','RatioPersPrem','PropOmit','RatioPersOmit'};
 sessionCondition = table([1 2 3 4 5 6]','VariableNames',{'Conditions'});
-
 for i = 1:length(dataNames)
     subsetData = stressDataTable(:, {'SUBJECT','SessionType',dataNames{i}});
     unstackedData = unstack(subsetData,dataNames{i},'SessionType');
@@ -51,4 +50,4 @@ for k = 1:col
 end
 
 %% print PDF of graph and stats results
-safePrint('R15StressResults','.pdf')
+%safePrint('R15StressResults','.pdf')
