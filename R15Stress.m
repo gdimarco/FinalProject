@@ -25,8 +25,8 @@ for i = 1:length(dataNames)
     unstackedData = unstack(subsetData,dataNames{i},'SessionType');
     dataNames{i} = unstackedData;
     dataNames{i} = dataNames{i}(~any(ismissing(dataNames{i}),2),:); %remove mice who have not completed all stress sessions
-    rm{i} = fitrm(dataNames{i},'odorstress-waterstress~SUBJECT','WithinDesign',sessionCondition);
-    ranovatbl{i} = ranova(rm{i});
+%     rm{i} = fitrm(dataNames{i},'odorstress-waterstress~SUBJECT','WithinDesign',sessionCondition);
+%     ranovatbl{i} = ranova(rm{i});
     %c = multcompare(stats,Name,Value); % post-hoc test
 end
 %% create graphs
@@ -50,4 +50,4 @@ for k = 1:col
 end
 
 %% print PDF of graph and stats results
-%safePrint('R15StressResults','.pdf')
+%publish('R15Stress.m','pdf','showCode',false)
