@@ -1,4 +1,4 @@
-function R15Stress(filename)
+function [ranovatbl, tukeystbl] = R15Stress(filename)
 %% Help Documentation
 % This function was created to analyze and graph data from the stress
 % sessions of the R15 grant project in the Harris/Soto lab at Texas Tech.
@@ -17,11 +17,21 @@ function R15Stress(filename)
 %
 % INPUTS: filename must be an excel spread sheet
 %       **if there are mutiple sheets in the excel file, the function will prompt you to enter which sheet you want to use**
-% OUTPUTS: this function prints data graphs, repeated measures anova
-%          results, and tukey's post hoc test results
+% OUTPUTS: 
+%   R15Stress(filename) prints only data graphs in an eps format 
+%   ranovatbl = R15Stress(filename) prints data graphs and repeated measures anova results, and tukey's post hoc test results
+%   [ranovatbl, tukeystbl] = R15Stress(filename) prints data graph, repeated measures anova results, and tukey's post hoc test results
+%
+% Anova and Post Hoc Result Tables are in the following order (column-wise):
+%   1. Proportion Correct
+%   2. Ratio Perserverative Correct
+%   3. Proportion Premature
+%   4. Ratio Perserverative Premature
+%   5. Proportion Omitted
+%   6. Ratio Perserverative Omitted
 
-%% Check if input file exists & check that the file is an excel file
-if ~exist(filename, 'file')
+%% Check if input file exists & check that the input file is an excel file
+if ~exist(filename,'file')
    error('Input file does not exist. Please input a file that exists.');
 else 
    [xlsFileStatus, xlsSheetNames] = xlsfinfo(filename);
@@ -30,7 +40,7 @@ else
    end
 end
 
-% determine which sheet in the excel file to use
+% Determine which sheet in the excel file to use
 numSheets = length(xlsSheetNames);
 if numSheets == 1
    xlsSheet = cell2mat(xlsSheetNames);
@@ -71,13 +81,15 @@ for i = 1:length(dataNames)
     unstackedData = unstack(subsetData,dataNames{i},'SessionType'); %reorganize the data by session type
     cleanUnstackedData = unstackedData(~any(ismissing(unstackedData),2),:); %remove mice who have not completed all stress sessions
     rm = fitrm(cleanUnstackedData,'odorstress-waterstress~SUBJECT-1','WithinDesign',sessionCondition); %fit the repeated measures model
-    ranovatbl{i} = ranova(rm); %generate repeated measures anova output
-    celldisp(ranovatbl(i),dataNames{i}); %display repeated measures anova output for every dependent variable
-    tukeystbl{i} = multcompare(rm,'SessionType'); % Tukey's post-hoc test
-    celldisp(tukeystbl(i),dataNames{i}); %display post-hoc output for every dependent variable
+    if nargout >= 1
+       ranovatbl{i} = ranova(rm); % generate repeated measures anova output if prompted
+       if nargout == 2
+          tukeystbl{i} = multcompare(rm,'SessionType'); % Tukey's post-hoc test if prompted
+       end
+    end
 end
 
-%% create graphs
+%% create bar graphs
 categories = categorical({'Non-Tg Continuous', 'Tg Continuous','Non-Tg Intermittent','Tg Intermittent'});
 yPlotVars = [stressDataArray.mean_PropCorrect, stressDataArray.mean_RatioPersCorrect, stressDataArray.mean_PropPrem,stressDataArray.mean_RatioPersPrem, stressDataArray.mean_PropOmit, stressDataArray.mean_RatioPersOmit]; 
 titles = {'Proportion Correct','Ratio Perservarative Correct','Proportion Premature','Ratio Perserverative Premature','Proportion Omitted','Ratio Perservarative Omitted'};
@@ -99,5 +111,4 @@ subplot(3,2,2)
 legend(stressDataArray.SessionType(1:6), 'location','northeast');
 
 %% print PDF of graph and stats results
-%safePrint('R15 Stress Data','-depsc2')
-%publish('R15Stress.m','format','pdf','showCode',false);
+safePrint('R15 Stress Data','-depsc2')
