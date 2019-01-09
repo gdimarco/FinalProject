@@ -1,41 +1,89 @@
+function R15Stress(filename)
+%% Help Documentation
+% This function was created to analyze and graph data from the stress
+% sessions of the R15 grant project in the Harris/Soto lab at Texas Tech.
+%
+% R15Stress creates a table from the input excel file. Then proportion
+% correct, proportion premature, proportion omitted, and perserverative data
+% are generated in new columns on the table using the current data in the
+% excel sheet. Next data is arranged by group, genotype, and session
+% type. The function then runs a repeated measures anova, Tukey's post-hoc test, graphs the data,
+% and prints the results. Graphs are set to JNeuroscience
+% requirements.
+%
+% Repeated Measures Model Information:
+%   Wilkinson Notation for fitrm: 'odorstress-waterstress~SUBJECT-1'
+%   Within Design Model
+%
+% INPUTS: filename must be an excel spread sheet
+%       **if there are mutiple sheets in the excel file, the function will prompt you to enter which sheet you want to use**
+% OUTPUTS: this function prints data graphs, repeated measures anova
+%          results, and tukey's post hoc test results
+
+%% Check if input file exists & check that the file is an excel file
+if ~exist(filename, 'file')
+   error('Input file does not exist. Please input a file that exists.');
+else 
+   [xlsFileStatus, xlsSheetNames] = xlsfinfo(filename);
+   if strcmpi(xlsFileStatus, '')
+      error('Input file is not an excel spreadsheet. Please input an excel file.');
+   end
+end
+
+% determine which sheet in the excel file to use
+numSheets = length(xlsSheetNames);
+if numSheets == 1
+   xlsSheet = cell2mat(xlsSheetNames);
+else
+   userResp = input('This excel file has multiple sheets. Please type the name of the sheet you wish to use.\n','s');
+   compUserInput = strcmpi(xlsSheetNames,userResp);
+   if any(compUserInput)
+      xlsSheet = userResp;
+   else
+      error('This sheet does not exist. Please input a valid sheet name');
+   end
+end
+
 %% Import data file and edit variable names for proper table format
-[~,~,stressData] = xlsread('/Users/giulianadimarco/Documents/Texas Tech/Research/Data/R15StressData.xlsx','R15StressData');
+[~,~,stressData] = xlsread(filename,xlsSheet);
 varNames = cellfun(@(x) x(isstrprop(x,'alphanum')),stressData(1,:),'UniformOutput',false); %removes spaces & illegal characters from variable names for valid table names
 sessTypeNames = cellfun(@(x) x(isstrprop(x, 'alphanum')), stressData(2:end,8), 'UniformOutput', false); %remove spaces from session type names for reorganized data tables
 
 %% Use imported data to create a table and add cols to find important data 
 stressDataTable = cell2table(stressData(2:end,:),'VariableNames',varNames);
-stressDataTable.PropCorrect = ((stressDataTable.NUMCORRECTDURINGSTIMULUS) + (stressDataTable.NUMCORRECTDURINGLH)) ./ (stressDataTable.NUMTRIALS);
-stressDataTable.PropPrem = (stressDataTable.NUMPREMATURE)./(stressDataTable.NUMTRIALS);
-stressDataTable.PropOmit = (stressDataTable.NUMOMISSIONS) ./ (stressDataTable.NUMTRIALS);
-stressDataTable.RatioPersCorrect = (stressDataTable.TOTALPOSTRNFRSPS) ./ ((stressDataTable.NUMCORRECTDURINGSTIMULUS) + (stressDataTable.NUMCORRECTDURINGLH));
-stressDataTable.RatioPersPrem = (stressDataTable.TOTALPOSTPREMATURERSPS) ./ (stressDataTable.NUMPREMATURE);
-stressDataTable.RatioPersOmit = (stressDataTable.TOTALPOSTOMISSIONTORSPS) ./ (stressDataTable.NUMOMISSIONS);
+stressDataTable.PropCorrect = ((stressDataTable.NUMCORRECTDURINGSTIMULUS) + (stressDataTable.NUMCORRECTDURINGLH)) ./ (stressDataTable.NUMTRIALS); %proportion correct responses
+stressDataTable.PropPrem = (stressDataTable.NUMPREMATURE)./(stressDataTable.NUMTRIALS); %proportion premature responses
+stressDataTable.PropOmit = (stressDataTable.NUMOMISSIONS) ./ (stressDataTable.NUMTRIALS); %proportion omitted responses
+stressDataTable.RatioPersCorrect = (stressDataTable.TOTALPOSTRNFRSPS) ./ ((stressDataTable.NUMCORRECTDURINGSTIMULUS) + (stressDataTable.NUMCORRECTDURINGLH)); %ratio perserverative correct responses
+stressDataTable.RatioPersPrem = (stressDataTable.TOTALPOSTPREMATURERSPS) ./ (stressDataTable.NUMPREMATURE); %ratio perserverative premature responses
+stressDataTable.RatioPersOmit = (stressDataTable.TOTALPOSTOMISSIONTORSPS) ./ (stressDataTable.NUMOMISSIONS); %ratio perserverative omitted responses
 
 %% get mean proportions separated by group, genotype, and session type
 stressDataArray = grpstats(stressDataTable,{'GROUP','Genotype','SessionType'},{'mean','std'},'DataVars',{'PropCorrect','PropPrem','PropOmit','RatioPersCorrect','RatioPersPrem','RatioPersOmit'});
 
-%% reorganize data for fitrm and run repeated measures ANOVA 
-
+%% reorganize data for fitrm, run repeated measures ANOVA, run Tukey's Post-Hoc test
 stressDataTable.SessionType = sessTypeNames; %replaces the current session type names with the new ones for valid table names
 dataNames = {'PropCorrect','RatioPersCorrect','PropPrem','RatioPersPrem','PropOmit','RatioPersOmit'};
-sessionCondition = table([1 2 3 4 5 6]','VariableNames',{'Conditions'});
+sessionCondition = table([1 2 3 4 5 6]','VariableNames',{'SessionType'});
+ranovatbl = cell(1,6); tukeystbl = cell(1,6); %preallocation 
 for i = 1:length(dataNames)
-    subsetData = stressDataTable(:, {'SUBJECT','SessionType',dataNames{i}});
-    unstackedData = unstack(subsetData,dataNames{i},'SessionType');
-    dataNames{i} = unstackedData;
-    dataNames{i} = dataNames{i}(~any(ismissing(dataNames{i}),2),:); %remove mice who have not completed all stress sessions
-%     rm{i} = fitrm(dataNames{i},'odorstress-waterstress~SUBJECT','WithinDesign',sessionCondition);
-%     ranovatbl{i} = ranova(rm{i});
-    %c = multcompare(stats,Name,Value); % post-hoc test
+    subsetData = stressDataTable(:, {'SUBJECT','SessionType',dataNames{i}}); %generate a subset of only necessary data
+    unstackedData = unstack(subsetData,dataNames{i},'SessionType'); %reorganize the data by session type
+    cleanUnstackedData = unstackedData(~any(ismissing(unstackedData),2),:); %remove mice who have not completed all stress sessions
+    rm = fitrm(cleanUnstackedData,'odorstress-waterstress~SUBJECT-1','WithinDesign',sessionCondition); %fit the repeated measures model
+    ranovatbl{i} = ranova(rm); %generate repeated measures anova output
+    celldisp(ranovatbl(i),dataNames{i}); %display repeated measures anova output for every dependent variable
+    tukeystbl{i} = multcompare(rm,'SessionType'); % Tukey's post-hoc test
+    celldisp(tukeystbl(i),dataNames{i}); %display post-hoc output for every dependent variable
 end
+
 %% create graphs
 categories = categorical({'Non-Tg Continuous', 'Tg Continuous','Non-Tg Intermittent','Tg Intermittent'});
 yPlotVars = [stressDataArray.mean_PropCorrect, stressDataArray.mean_RatioPersCorrect, stressDataArray.mean_PropPrem,stressDataArray.mean_RatioPersPrem, stressDataArray.mean_PropOmit, stressDataArray.mean_RatioPersOmit]; 
 titles = {'Proportion Correct','Ratio Perservarative Correct','Proportion Premature','Ratio Perserverative Premature','Proportion Omitted','Ratio Perservarative Omitted'};
 [~,col] = size(yPlotVars);
 
-figure(1);
+figure('Name','R15 Stress Data','NumberTitle','off','PaperUnits','centimeters','PaperSize',[8.5,11],'PaperPosition',[0 0 17.6 28]);
 hold on
 for k = 1:col
     subplot(3,2,k);
@@ -46,8 +94,10 @@ for k = 1:col
     else 
        ylim([0 2.0]);
     end
-    legend(stressDataArray.SessionType(1:6), 'location','northeastoutside');
 end
+subplot(3,2,2)
+legend(stressDataArray.SessionType(1:6), 'location','northeast');
 
 %% print PDF of graph and stats results
-%publish('R15Stress.m','pdf','showCode',false)
+%safePrint('R15 Stress Data','-depsc2')
+%publish('R15Stress.m','format','pdf','showCode',false);
