@@ -79,7 +79,7 @@ ranovatbl = cell(1,6); tukeystbl = cell(1,6); %preallocation
 for i = 1:length(dataNames)
     subsetData = stressDataTable(:, {'SUBJECT','SessionType',dataNames{i}}); %generate a subset of only necessary data
     unstackedData = unstack(subsetData,dataNames{i},'SessionType'); %reorganize the data by session type
-    cleanUnstackedData = unstackedData(~any(ismissing(unstackedData),2),:); %remove mice who have not completed all stress sessions
+    cleanUnstackedData = rmmissing(unstackedData); %remove mice who have not completed all stress sessions
     rm = fitrm(cleanUnstackedData,'odorstress-waterstress~SUBJECT-1','WithinDesign',sessionCondition); %fit the repeated measures model
     if nargout >= 1
        ranovatbl{i} = ranova(rm); % generate repeated measures anova output if prompted
