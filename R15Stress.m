@@ -77,11 +77,11 @@ dataNames = {'PropCorrect','RatioPersCorrect','PropPrem','RatioPersPrem','PropOm
 sessionCondition = table([1 2 3 4 5 6]','VariableNames',{'SessionType'});
 ranovatbl = cell(1,6); tukeystbl = cell(1,6); %preallocation 
 for i = 1:length(dataNames)
-    subsetData = stressDataTable(:, {'SUBJECT','SessionType',dataNames{i}}); %generate a subset of only necessary data
-    unstackedData = unstack(subsetData,dataNames{i},'SessionType'); %reorganize the data by session type
-    cleanUnstackedData = rmmissing(unstackedData); %remove mice who have not completed all stress sessions
-    rm = fitrm(cleanUnstackedData,'odorstress-waterstress~SUBJECT-1','WithinDesign',sessionCondition); %fit the repeated measures model
     if nargout >= 1
+       subsetData = stressDataTable(:, {'SUBJECT','SessionType',dataNames{i}}); %generate a subset of only necessary data
+       unstackedData = unstack(subsetData,dataNames{i},'SessionType'); %reorganize the data by session type
+       cleanUnstackedData = rmmissing(unstackedData); %remove mice who have not completed all stress sessions
+       rm = fitrm(cleanUnstackedData,'odorstress-waterstress~SUBJECT-1','WithinDesign',sessionCondition); %fit the repeated measures model
        ranovatbl{i} = ranova(rm); % generate repeated measures anova output if prompted
        if nargout == 2
           tukeystbl{i} = multcompare(rm,'SessionType'); % Tukey's post-hoc test if prompted
@@ -111,4 +111,4 @@ subplot(3,2,2)
 legend(stressDataArray.SessionType(1:6), 'location','northeast');
 
 %% print PDF of graph and stats results
-safePrint('R15 Stress Data','-depsc2')
+safePrint('R15 Stress Data','-dtiff')
