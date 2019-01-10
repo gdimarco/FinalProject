@@ -69,6 +69,5 @@ if exist(printFile,'file')
        warning('User did not want to override the current file. Nothing was saved');
        return;
     end
-else
-    print(printFile,printExt);
 end
+print(printFile,printExt);
