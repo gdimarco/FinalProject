@@ -1,4 +1,4 @@
-function [ranovatbl, tukeystbl] = R15Stress(filename)
+function [ranovatbl, tukeystblSessionType, tukeystblSubject] = R15Stress(filename)
 %% Help Documentation
 % This function was created to analyze and graph data from the stress
 % sessions of the R15 grant project in the Harris/Soto lab at Texas Tech.
@@ -20,8 +20,9 @@ function [ranovatbl, tukeystbl] = R15Stress(filename)
 % OUTPUTS: 
 %   R15Stress(filename) prints only data graphs in an eps format 
 %   ranovatbl = R15Stress(filename) prints data graphs and repeated measures anova results, and tukey's post hoc test results
-%   [ranovatbl, tukeystbl] = R15Stress(filename) prints data graph, repeated measures anova results, and tukey's post hoc test results
-%
+%   [ranovatbl, tukeystbl] = R15Stress(filename) prints data graphs, repeated measures anova results, and tukeys post hoc test comparing session type
+%   [ranovatbl, tukeystblSessionType, tukeystblSubject] = R15Stress(filename) prints data graphs, repeated measures anova results, tukeys post hoc test comparing session type, and tukeys post hoc test comparing subjects
+% 
 % Anova and Post Hoc Result Tables are in the following order (column-wise):
 %   1. Proportion Correct
 %   2. Ratio Perserverative Correct
@@ -75,18 +76,21 @@ stressDataArray = grpstats(stressDataTable,{'GROUP','Genotype','SessionType'},{'
 stressDataTable.SessionType = sessTypeNames; %replaces the current session type names with the new ones for valid table names
 dataNames = {'PropCorrect','RatioPersCorrect','PropPrem','RatioPersPrem','PropOmit','RatioPersOmit'};
 sessionCondition = table([1 2 3 4 5 6]','VariableNames',{'SessionType'});
-ranovatbl = cell(1,6); tukeystbl = cell(1,6); %preallocation 
-for i = 1:length(dataNames)
-    if nargout >= 1
+if nargout >= 1
+   ranovatbl = cell(1,6); tukeystblSessionType = cell(1,6); tukeystblSubject = cell(1,6); %preallocation 
+   for i = 1:length(dataNames)
        subsetData = stressDataTable(:, {'SUBJECT','SessionType',dataNames{i}}); %generate a subset of only necessary data
        unstackedData = unstack(subsetData,dataNames{i},'SessionType'); %reorganize the data by session type
        cleanUnstackedData = rmmissing(unstackedData); %remove mice who have not completed all stress sessions
        rm = fitrm(cleanUnstackedData,'odorstress-waterstress~SUBJECT-1','WithinDesign',sessionCondition); %fit the repeated measures model
        ranovatbl{i} = ranova(rm); % generate repeated measures anova output if prompted
-       if nargout == 2
-          tukeystbl{i} = multcompare(rm,'SessionType'); % Tukey's post-hoc test if prompted
-       end
-    end
+   if nargout >= 2
+      tukeystblSessionType{i} = multcompare(rm,'SessionType'); % Tukey's post-hoc test if prompted for Session Type comparison
+      if nargout == 3
+         tukeystblSubject{i} = multcompare(rm,'SUBJECT'); % Tukey's post-hoc test if prompted for Subject comparison    
+      end
+   end
+   end
 end
 
 %% create bar graphs
