@@ -51,9 +51,6 @@ if strcmpi(formattype, '.tif') || strcmpi(formattype, '-tif') || strcmpi(formatt
    printExt = '-dtiff';
 elseif strcmpi(formattype, '.jpeg') || strcmpi(formattype, '-jpeg') || strcmpi(formattype, '-djpeg') || strcmpi(formattype, 'jpeg')
    printExt = '-djpg';
-elseif strcmpi(formattype, '.epsc') || strcmpi(formattype, '-epsc') || strcmpi(formattype, '-depsc') || strcmpi(formattype, 'epsc')...
-        || strcmpi(formattype, '.epsc2') || strcmpi(formattype, '-epsc2') || strcmpi(formattype, '-depsc2') || strcmpi(formattype, 'epsc2')
-   printExt = '-deps';
 end
 
 %% Add path if there is not one already
